@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preferenda — Ranked Choice Polls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1208; --ink-muted: #6b6355; --ink-faint: #b0a898;
+    --paper: #faf8f4; --paper-warm: #f3efe8; --paper-dark: #e8e2d8;
+    --accent: #c4622d; --accent-light: #f5e8df; --accent-dark: #8f3d14;
+    --teal: #1a6b5a; --teal-light: #e0f0eb;
+    --amber-light: #fdf3da;
+    --border: rgba(26,18,8,0.12); --border-strong: rgba(26,18,8,0.25);
+    --radius: 10px; --radius-lg: 16px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; font-size: 15px; }
+  .app-wrapper { max-width: 720px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header { padding: 40px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .logo-mark { width: 32px; height: 32px; background: var(--ink); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-mark svg { width: 18px; height: 18px; fill: var(--paper); }
+  h1 { font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; color: var(--ink); letter-spacing: -0.3px; }
+  .tagline { font-size: 13px; color: var(--ink-muted); margin-top: 4px; padding-left: 42px; }
+
+  .panel { background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 24px; }
+  .panel-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; margin-bottom: 6px; }
+  .panel-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 24px; line-height: 1.5; }
+
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 8px; }
+  input[type="text"] { width: 100%; padding: 11px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); background: var(--paper); outline: none; transition: border-color .15s, box-shadow .15s; }
+  input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,98,45,.12); background: white; }
+  input[type="text"]::placeholder { color: var(--ink-faint); }
+  .form-group { margin-bottom: 20px; }
+
+  .options-list { list-style: none; margin-bottom: 16px; }
+  .option-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: var(--paper-warm); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; transition: border-color .15s; }
+  .option-item:focus-within { border-color: var(--accent); background: white; }
+  .option-num { width: 22px; height: 22px; background: var(--ink); color: var(--paper); border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .option-item input { flex: 1; background: transparent; border: none; padding: 4px 0; font-size: 15px; outline: none; box-shadow: none; }
+  .btn-remove { background: none; border: none; cursor: pointer; color: var(--ink-faint); padding: 4px; border-radius: 6px; display: flex; align-items: center; transition: color .15s, background .15s; flex-shrink: 0; }
+  .btn-remove:hover { color: var(--accent); background: var(--accent-light); }
+  .btn-remove svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .15s; border: 1px solid transparent; text-decoration: none; }
+  .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; flex-shrink: 0; }
+  .btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn-primary:hover { background: #2e2418; }
+  .btn-secondary { background: var(--paper-warm); color: var(--ink); border-color: var(--border-strong); }
+  .btn-secondary:hover { background: var(--paper-dark); }
+  .btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-accent:hover { background: var(--accent-dark); }
+  .btn-ghost { background: transparent; color: var(--ink-muted); border-color: var(--border); font-size: 13px; padding: 8px 14px; }
+  .btn-ghost:hover { background: var(--paper-warm); color: var(--ink); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+  .share-box { background: var(--paper-warm); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+  .share-box h3 { font-family: 'DM Serif Display', serif; font-size: 17px; font-weight: 400; margin-bottom: 4px; }
+  .share-box p { font-size: 13px; color: var(--ink-muted); margin-bottom: 16px; }
+  .share-url-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .share-url { flex: 1; padding: 10px 14px; background: white; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 13px; color: var(--ink-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: all; }
+  .copy-feedback { font-size: 12px; color: var(--teal); margin-top: 6px; opacity: 0; transition: opacity .2s; }
+  .copy-feedback.show { opacity: 1; }
+
+  .vote-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .vote-header h2 { font-family: 'DM Serif Display', serif; font-size: 26px; font-weight: 400; letter-spacing: -0.4px; margin-bottom: 6px; }
+  .vote-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-muted); flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .badge-rcv { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-open { background: var(--teal-light); color: var(--teal); }
+  .badge-live { background: #fee2e2; color: #991b1b; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+
+  .vote-instructions { background: var(--amber-light); border: 1px solid rgba(176,122,20,.2); border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: #6b4e0a; margin-bottom: 24px; line-height: 1.6; }
+
+  .rank-list { list-style: none; margin-bottom: 24px; }
+  .rank-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 8px; background: white; border: 1px solid var(--border); border-radius: var(--radius); cursor: grab; user-select: none; transition: box-shadow .15s, transform .15s, border-color .15s; }
+  .rank-item:hover { border-color: var(--border-strong); }
+  .rank-item.dragging { opacity: .4; cursor: grabbing; }
+  .rank-item.drag-over { border-color: var(--accent); background: var(--accent-light); }
+  .rank-number { width: 28px; height: 28px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+  .rank-item:nth-child(1) .rank-number { background: #b8860b; }
+  .rank-item:nth-child(2) .rank-number { background: #708090; }
+  .rank-item:nth-child(3) .rank-number { background: #8B4513; }
+  .rank-label { flex: 1; font-size: 15px; }
+  .drag-handle { color: var(--ink-faint); display: flex; align-items: center; flex-shrink: 0; }
+  .drag-handle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
+  .result-round { margin-bottom: 24px; }
+  .round-title { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 12px; }
+  .result-bar-row { margin-bottom: 10px; }
+  .result-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--ink); }
+  .result-bar-label .pct { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .result-bar-track { height: 10px; background: var(--paper-dark); border-radius: 5px; overflow: hidden; }
+  .result-bar-fill { height: 100%; border-radius: 5px; background: var(--ink); transition: width .6s cubic-bezier(.4,0,.2,1); }
+  .result-bar-fill.winner { background: var(--accent); }
+  .result-bar-fill.eliminated { background: var(--ink-faint); }
+  .eliminated-row { opacity: .4; }
+  .winner-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-light); color: var(--accent-dark); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-left: 8px; }
+  .winner-name { font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+  .winner-sub { font-size: 13px; color: var(--ink-muted); }
+  .winner-box { padding: 20px 24px; background: var(--accent-light); border: 1px solid rgba(196,98,45,.2); border-radius: var(--radius-lg); margin-bottom: 28px; }
+  .vote-count-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--paper-warm); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--ink-muted); }
+  .vote-count-chip strong { color: var(--ink); font-weight: 600; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  .nav-tabs { display: flex; gap: 4px; background: var(--paper-warm); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 28px; }
+  .nav-tab { flex: 1; padding: 9px 16px; border: none; background: transparent; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink-muted); cursor: pointer; transition: all .15s; text-align: center; }
+  .nav-tab.active { background: white; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .nav-tab:hover:not(.active) { color: var(--ink); }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--ink-muted); }
+  .empty-state svg { width: 40px; height: 40px; stroke: var(--ink-faint); fill: none; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; font-weight: 500; color: var(--ink); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  .poll-card { padding: 16px 20px; background: white; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; cursor: pointer; transition: border-color .15s, box-shadow .15s; display: flex; align-items: center; gap: 14px; }
+  .poll-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .poll-card-info { flex: 1; min-width: 0; }
+  .poll-card-name { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+  .poll-card-meta { font-size: 12px; color: var(--ink-muted); }
+  .poll-card-arrow { color: var(--ink-faint); flex-shrink: 0; }
+  .poll-card-arrow svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
+  /* ── Firebase setup banner ── */
+  .setup-banner { background: #fffbeb; border: 1px solid #f59e0b; border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; }
+  .setup-banner h3 { font-size: 15px; font-weight: 600; color: #92400e; margin-bottom: 8px; }
+  .setup-banner p { font-size: 13px; color: #78350f; line-height: 1.6; margin-bottom: 12px; }
+  .setup-banner code { background: rgba(0,0,0,.06); border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 12px; }
+  .setup-banner ol { font-size: 13px; color: #78350f; padding-left: 18px; line-height: 2; }
+  .setup-banner details summary { cursor: pointer; font-weight: 600; color: #92400e; font-size: 13px; margin-bottom: 8px; }
+
+  .config-form { display: grid; gap: 10px; }
+  .config-form input { font-size: 13px; padding: 9px 12px; }
+  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .live-dot { width: 7px; height: 7px; background: #ef4444; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+
+  .hidden { display: none !important; }
+  .text-success { color: var(--teal); }
+
+  @media (max-width: 540px) {
+    .panel { padding: 20px; }
+    .vote-header h2 { font-size: 22px; }
+    .winner-name { font-size: 22px; }
+    .config-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-mark">
+        <svg viewBox="0 0 18 18"><rect x="2" y="2" width="6" height="6" rx="1.5"/><rect x="10" y="2" width="6" height="6" rx="1.5"/><rect x="2" y="10" width="6" height="6" rx="1.5"/><rect x="10" y="10" width="6" height="6" rx="1.5" opacity="0.4"/></svg>
+      </div>
+      <h1>Preferenda</h1>
+    </div>
+    <div class="tagline">Ranked-choice polling — real-time results, every voice counts</div>
+  </header>
+
+  <!-- Firebase not configured -->
+  <div id="setupBanner" class="setup-banner hidden">
+    <h3>⚙️ One-time Firebase setup required</h3>
+    <p>Preferenda uses Firebase Firestore to sync votes in real time across all devices. You need a free Firebase project to get started. This takes about 3 minutes.</p>
+    <details open>
+      <summary>Step-by-step setup instructions</summary>
+      <ol>
+        <li>Go to <strong>console.firebase.google.com</strong> and click <em>Add project</em></li>
+        <li>Name your project (e.g. <code>my-polls</code>), click through the steps, create it</li>
+        <li>In the left sidebar click <strong>Firestore Database</strong> → <em>Create database</em></li>
+        <li>Choose <strong>Start in test mode</strong> (allows all reads/writes for 30 days) → Next → Enable</li>
+        <li>In the left sidebar click <strong>Project settings</strong> (gear icon)</li>
+        <li>Scroll to <em>Your apps</em> → click the <strong>&lt;/&gt;</strong> Web icon → Register app</li>
+        <li>Copy the config values below from the <code>firebaseConfig</code> object shown and paste them here:</li>
+      </ol>
+    </details>
+    <div class="config-form" style="margin-top:16px">
+      <input type="text" id="cfg-apiKey" placeholder="apiKey" />
+      <input type="text" id="cfg-authDomain" placeholder="authDomain  (e.g. my-polls.firebaseapp.com)" />
+      <input type="text" id="cfg-projectId" placeholder="projectId  (e.g. my-polls)" />
+      <div class="config-row">
+        <input type="text" id="cfg-storageBucket" placeholder="storageBucket" />
+        <input type="text" id="cfg-messagingSenderId" placeholder="messagingSenderId" />
+      </div>
+      <input type="text" id="cfg-appId" placeholder="appId" />
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="saveFirebaseConfig()">Save &amp; connect</button>
+    </div>
+    <div id="cfgError" style="font-size:13px;color:var(--accent);margin-top:8px;"></div>
+  </div>
+
+  <!-- Connected status bar -->
+  <div id="connectedBar" class="hidden" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--teal);background:var(--teal-light);border:1px solid rgba(26,107,90,.2);border-radius:var(--radius);padding:8px 14px;margin-bottom:20px">
+    <span class="live-dot"></span>
+    Connected to Firebase — votes sync in real time
+    <button onclick="disconnectFirebase()" style="margin-left:auto;background:none;border:none;font-size:11px;color:var(--ink-muted);cursor:pointer;text-decoration:underline">Change config</button>
+  </div>
+
+  <!-- TAB NAV -->
+  <div class="nav-tabs" id="mainNav">
+    <button class="nav-tab active" onclick="showTab('create')">Create poll</button>
+    <button class="nav-tab" onclick="showTab('mypolls')">My polls</button>
+    <button class="nav-tab hidden" onclick="showTab('vote')" id="voteTab">Vote</button>
+    <button class="nav-tab hidden" onclick="showTab('results')" id="resultsTab">Results</button>
+  </div>
+
+  <!-- CREATE -->
+  <div id="tab-create">
+    <div id="shareBoxCreated"></div>
+    <div class="panel">
+      <div class="panel-title">New poll</div>
+      <div class="panel-sub">Give it a name and add your options. Voters rank them in order of preference — results update live.</div>
+      <div class="form-group">
+        <label for="pollName">Poll question or title</label>
+        <input type="text" id="pollName" placeholder="e.g. What should we have for team lunch?" />
+      </div>
+      <div class="form-group">
+        <label>Options</label>
+        <ul class="options-list" id="optionsList"></ul>
+        <button class="btn btn-ghost" onclick="addOption()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add option
+        </button>
+      </div>
+      <hr class="divider">
+      <div class="btn-row">
+        <button class="btn btn-primary" id="createBtn" onclick="createPoll()">
+          <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Create &amp; share poll
+        </button>
+        <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+      </div>
+      <div id="createError" style="font-size:13px;color:var(--accent);margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- MY POLLS -->
+  <div id="tab-mypolls" class="hidden">
+    <div id="pollListContainer"></div>
+  </div>
+
+  <!-- VOTE -->
+  <div id="tab-vote" class="hidden">
+    <div id="voteView"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="tab-results" class="hidden">
+    <div id="resultsView"></div>
+  </div>
+
+</div><!-- /app-wrapper -->
+
+<!-- Firebase SDK (compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+// ─── Firebase state ──────────────────────────────────────────
+let db = null;
+let unsubscribeResults = null;
+let unsubscribeVote = null;
+
+const CFG_KEY = 'preferenda_firebase_cfg';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY)); } catch { return null; }
+}
+
+function initFirebase(cfg) {
+  try {
+    // If already initialized, just get the app
+    let app;
+    try { app = firebase.app(); }
+    catch { app = firebase.initializeApp(cfg); }
+    db = firebase.firestore();
+    return true;
+  } catch(e) {
+    console.error('Firebase init error', e);
+    return false;
+  }
+}
+
+function saveFirebaseConfig() {
+  const fields = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+  const cfg = {};
+  for (const f of fields) {
+    const val = document.getElementById('cfg-' + f).value.trim();
+    if (!val) { document.getElementById('cfgError').textContent = 'Please fill in all fields.'; return; }
+    cfg[f] = val;
+  }
+  document.getElementById('cfgError').textContent = '';
+  if (!initFirebase(cfg)) {
+    document.getElementById('cfgError').textContent = 'Could not connect — check your config values.';
+    return;
+  }
+  // Test connectivity
+  db.collection('_test').limit(1).get().then(() => {
+    localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+    showConnectedState();
+  }).catch(e => {
+    document.getElementById('cfgError').textContent = 'Connection failed: ' + e.message;
+  });
+}
+
+function disconnectFirebase() {
+  localStorage.removeItem(CFG_KEY);
+  location.reload();
+}
+
+function showConnectedState() {
+  document.getElementById('setupBanner').classList.add('hidden');
+  document.getElementById('connectedBar').classList.remove('hidden');
+  document.getElementById('connectedBar').style.display = 'flex';
+}
+
+function checkFirebaseReady() {
+  if (!db) {
+    document.getElementById('createError').textContent = 'Connect to Firebase first (see the setup banner above).';
+    return false;
+  }
+  return true;
+}
+
+// ─── Boot ──────────────────────────────────────────────────────
+(function boot() {
+  const cfg = loadConfig();
+  if (cfg && initFirebase(cfg)) {
+    showConnectedState();
+  } else {
+    document.getElementById('setupBanner').classList.remove('hidden');
+  }
+  clearForm();
+  handleHash();
+  window.addEventListener('hashchange', handleHash);
+})();
+
+// ─── Tab management ───────────────────────────────────────────
+function showTab(name) {
+  ['create','mypolls','vote','results'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+  });
+  document.querySelectorAll('.nav-tab').forEach((b, i) => {
+    const tabs = ['create','mypolls','vote','results'];
+    b.classList.toggle('active', tabs[i] === name);
+  });
+  if (name === 'mypolls') renderPollList();
+}
+
+// ─── Create poll ──────────────────────────────────────────────
+let optionCount = 0;
+
+function addOption(value='') {
+  optionCount++;
+  const list = document.getElementById('optionsList');
+  const li = document.createElement('li');
+  li.className = 'option-item';
+  li.innerHTML = `
+    <span class="option-num">${list.children.length + 1}</span>
+    <input type="text" placeholder="Option ${list.children.length + 1}" value="${escHtml(value)}" />
+    <button class="btn-remove" onclick="removeOption(this)" title="Remove">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  list.appendChild(li);
+  reIndexOptions();
+}
+
+function removeOption(btn) { btn.closest('.option-item').remove(); reIndexOptions(); }
+function reIndexOptions() {
+  document.querySelectorAll('#optionsList .option-item').forEach((item, i) => {
+    item.querySelector('.option-num').textContent = i + 1;
+    item.querySelector('input').placeholder = `Option ${i + 1}`;
+  });
+}
+
+function clearForm() {
+  document.getElementById('pollName').value = '';
+  document.getElementById('optionsList').innerHTML = '';
+  document.getElementById('createError').textContent = '';
+  optionCount = 0;
+  addOption(); addOption(); addOption();
+}
+
+async function createPoll() {
+  if (!checkFirebaseReady()) return;
+  const name = document.getElementById('pollName').value.trim();
+  const errEl = document.getElementById('createError');
+  if (!name) { errEl.textContent = 'Please enter a poll name.'; return; }
+  const inputs = document.querySelectorAll('#optionsList input');
+  const options = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+  if (options.length < 2) { errEl.textContent = 'Add at least 2 options.'; return; }
+  errEl.textContent = '';
+
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Creating…`;
+
+  try {
+    const docRef = await db.collection('polls').add({
+      name, options,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      voteCount: 0
+    });
+    const id = docRef.id;
+    // Track locally as "my poll"
+    const myPolls = JSON.parse(localStorage.getItem('my_polls') || '[]');
+    myPolls.unshift({ id, name, options, createdAt: Date.now() });
+    localStorage.setItem('my_polls', JSON.stringify(myPolls));
+    showShareBox(id, name);
+    openPollTabs(id, { id, name, options });
+  } catch(e) {
+    errEl.textContent = 'Error creating poll: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg> Create &amp; share poll`;
+  }
+}
+
+function showShareBox(id, name) {
+  const url = buildVoteUrl(id);
+  const box = document.getElementById('shareBoxCreated');
+  box.innerHTML = `
+    <div class="share-box">
+      <h3>🎉 Poll created!</h3>
+      <p>Share this link — results update live as votes come in.</p>
+      <div class="share-url-row">
+        <div class="share-url">${escHtml(url)}</div>
+        <button class="btn btn-accent" onclick="copyToClipboard('${escHtml(url)}', this)">Copy link</button>
+      </div>
+      <div class="copy-feedback" id="copyFeedback">Copied ✓</div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-secondary" onclick="showTab('vote')">Preview vote →</button>
+        <button class="btn btn-ghost" onclick="showTab('results')">Live results →</button>
+      </div>
+    </div>`;
+}
+
+function buildVoteUrl(id) {
+  return `${location.origin}${location.pathname}#vote:${id}`;
+}
+
+// ─── My polls list ────────────────────────────────────────────
+function renderPollList() {
+  const myPolls = JSON.parse(localStorage.getItem('my_polls') || '[]');
+  const container = document.getElementById('pollListContainer');
+  if (myPolls.length === 0) {
+    container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-dasharray="2 2"/></svg><h3>No polls yet</h3><p>Create your first ranked-choice poll.</p></div>`;
+    return;
+  }
+  container.innerHTML = myPolls.map(p => `
+    <div class="poll-card" onclick="openPollById('${p.id}')">
+      <div class="poll-card-info">
+        <div class="poll-card-name">${escHtml(p.name)}</div>
+        <div class="poll-card-meta">${p.options.length} options · ${new Date(p.createdAt).toLocaleDateString()}</div>
+      </div>
+      <div class="poll-card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>`).join('');
+}
+
+async function openPollById(id) {
+  if (!db) return;
+  try {
+    const doc = await db.collection('polls').doc(id).get();
+    if (!doc.exists) { alert('Poll not found.'); return; }
+    const poll = { id, ...doc.data() };
+    openPollTabs(id, poll);
+    showTab('vote');
+  } catch(e) { alert('Error loading poll: ' + e.message); }
+}
+
+function openPollTabs(id, poll) {
+  document.getElementById('voteTab').classList.remove('hidden');
+  document.getElementById('resultsTab').classList.remove('hidden');
+  renderVoteView(id, poll);
+  subscribeToResults(id, poll);
+}
+
+// ─── Vote view ────────────────────────────────────────────────
+let currentPollId = null;
+let dragSrcIdx = null;
+let rankOrder = [];
+
+function renderVoteView(id, poll) {
+  currentPollId = id;
+  rankOrder = [...poll.options];
+  const alreadyVoted = !!localStorage.getItem('voted_' + id);
+  const container = document.getElementById('voteView');
+  container.innerHTML = `
+    <div class="vote-header">
+      <h2>${escHtml(poll.name)}</h2>
+      <div class="vote-meta">
+        <span class="badge badge-rcv">Ranked choice</span>
+        <span class="badge badge-open">Open</span>
+        <span><span class="live-dot" style="margin-right:4px"></span>Live</span>
+      </div>
+    </div>
+    ${alreadyVoted
+      ? `<div class="vote-instructions" style="background:var(--teal-light);border-color:rgba(26,107,90,.2);color:#0d4a3a">
+           You've already voted. <button class="btn btn-ghost" style="display:inline;padding:0 4px;font-size:13px" onclick="showTab('results')">See live results →</button>
+         </div>`
+      : `<div class="vote-instructions"><strong>How to vote:</strong> Drag to reorder, or use the ↑↓ buttons. #1 is your top pick.</div>
+         <ul class="rank-list" id="rankList"></ul>
+         <div class="btn-row">
+           <button class="btn btn-accent" id="submitVoteBtn" onclick="submitVote()">
+             <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+             Submit vote
+           </button>
+         </div>
+         <div id="voteMsg" style="font-size:13px;margin-top:10px;"></div>`}
+    <div style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="showTab('results')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        View live results
+      </button>
+    </div>`;
+  if (!alreadyVoted) renderRankList();
+}
+
+function renderRankList() {
+  const list = document.getElementById('rankList');
+  if (!list) return;
+  list.innerHTML = rankOrder.map((opt, i) => `
+    <li class="rank-item" draggable="true"
+      ondragstart="dragStart(event,${i})" ondragover="dragOver(event,${i})" ondrop="dragDrop(event,${i})" ondragleave="dragLeave(event)" ondragend="dragEnd()">
+      <span class="rank-number">${i+1}</span>
+      <span class="rank-label">${escHtml(opt)}</span>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button onclick="moveUp(${i})" style="background:var(--paper-warm);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-muted)" ${i===0?'disabled style="opacity:.3;cursor:default"':''}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <button onclick="moveDown(${i})" style="background:var(--paper-warm);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-muted)" ${i===rankOrder.length-1?'disabled style="opacity:.3;cursor:default"':''}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+      <div class="drag-handle"><svg viewBox="0 0 24 24"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg></div>
+    </li>`).join('');
+}
+
+function moveUp(i) { if (i>0){[rankOrder[i-1],rankOrder[i]]=[rankOrder[i],rankOrder[i-1]]; renderRankList();} }
+function moveDown(i) { if (i<rankOrder.length-1){[rankOrder[i+1],rankOrder[i]]=[rankOrder[i],rankOrder[i+1]]; renderRankList();} }
+function dragStart(e,i) { dragSrcIdx=i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function dragOver(e,i) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dragDrop(e,i) { e.preventDefault(); if(dragSrcIdx!==i){const a=[...rankOrder];const[m]=a.splice(dragSrcIdx,1);a.splice(i,0,m);rankOrder=a; renderRankList();} }
+function dragEnd() { document.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('dragging','drag-over')); }
+
+async function submitVote() {
+  const id = currentPollId;
+  if (!id || !db) return;
+  const btn = document.getElementById('submitVoteBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Submitting…`;
+  try {
+    await db.collection('polls').doc(id).collection('votes').add({
+      ranking: [...rankOrder],
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Increment vote count
+    await db.collection('polls').doc(id).update({
+      voteCount: firebase.firestore.FieldValue.increment(1)
+    });
+    localStorage.setItem('voted_' + id, '1');
+    document.getElementById('voteMsg').innerHTML = `<span class="text-success">✓ Vote recorded! Results are updating live.</span>`;
+    setTimeout(() => showTab('results'), 1000);
+  } catch(e) {
+    document.getElementById('voteMsg').textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Submit vote`;
+  }
+}
+
+// ─── Real-time results ────────────────────────────────────────
+function subscribeToResults(pollId, poll) {
+  if (unsubscribeResults) { unsubscribeResults(); unsubscribeResults = null; }
+  const container = document.getElementById('resultsView');
+  container.innerHTML = `<div class="panel"><div style="color:var(--ink-muted);font-size:13px;padding:20px 0">Loading results…</div></div>`;
+
+  unsubscribeResults = db.collection('polls').doc(pollId)
+    .collection('votes')
+    .onSnapshot(snapshot => {
+      const votes = snapshot.docs.map(d => d.data().ranking).filter(Boolean);
+      renderResultsView(pollId, poll, votes);
+    }, err => {
+      container.innerHTML = `<div class="panel"><p style="color:var(--accent)">Error loading results: ${escHtml(err.message)}</p></div>`;
+    });
+}
+
+function computeRCV(votes, options) {
+  let remaining = [...options];
+  const rounds = [];
+  while (remaining.length > 1) {
+    const tally = {};
+    remaining.forEach(o => tally[o] = 0);
+    votes.forEach(ballot => {
+      for (const choice of ballot) {
+        if (remaining.includes(choice)) { tally[choice]++; break; }
+      }
+    });
+    const totalVotes = Object.values(tally).reduce((a,b) => a+b, 0);
+    rounds.push({ tally: {...tally}, totalVotes, remaining: [...remaining] });
+    for (const opt of remaining) {
+      if (tally[opt] > totalVotes / 2) return { winner: opt, rounds };
+    }
+    const minVotes = Math.min(...remaining.map(o => tally[o]));
+    remaining = remaining.filter(o => tally[o] !== minVotes || remaining.filter(x=>tally[x]===minVotes).length === remaining.length);
+    // fallback: eliminate just the first min
+    if (remaining.length === Object.keys(rounds[rounds.length-1].tally).length) {
+      const loser = rounds[rounds.length-1].remaining.find(o => rounds[rounds.length-1].tally[o] === minVotes);
+      remaining = rounds[rounds.length-1].remaining.filter(o => o !== loser);
+    }
+  }
+  return { winner: remaining[0] || null, rounds };
+}
+
+function renderResultsView(id, poll, votes) {
+  const container = document.getElementById('resultsView');
+  const shareUrl = buildVoteUrl(id);
+
+  if (votes.length === 0) {
+    container.innerHTML = `
+      <div class="panel">
+        <div class="panel-title">${escHtml(poll.name)}</div>
+        <div class="empty-state" style="padding:32px 0">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <h3>No votes yet</h3><p>Share the poll link to start collecting responses.</p>
+        </div>
+        <div class="share-box" style="margin-top:0">
+          <h3>Share this poll</h3><p>Copy and send this link to voters.</p>
+          <div class="share-url-row">
+            <div class="share-url">${escHtml(shareUrl)}</div>
+            <button class="btn btn-accent" onclick="copyToClipboard('${escHtml(shareUrl)}',this)">Copy</button>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const { winner, rounds } = computeRCV(votes, poll.options);
+  let html = `
+    <div class="panel">
+      <div class="panel-title">${escHtml(poll.name)}</div>
+      <div class="vote-meta" style="margin-bottom:20px">
+        <span class="badge badge-rcv">Ranked choice</span>
+        <span class="badge badge-live"><span class="live-dot" style="margin-right:4px"></span>Live</span>
+        <div class="vote-count-chip"><strong>${votes.length}</strong> vote${votes.length!==1?'s':''} cast</div>
+      </div>`;
+
+  if (winner) {
+    html += `
+      <div class="winner-box">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-dark);margin-bottom:6px">Winner</div>
+        <div class="winner-name">${escHtml(winner)}</div>
+        <div class="winner-sub">Won by ranked-choice voting · ${rounds.length} round${rounds.length!==1?'s':''}</div>
+      </div>`;
+  }
+
+  rounds.forEach((round, ri) => {
+    html += `
+      <div class="result-round">
+        <div class="round-title">Round ${ri+1}${ri===rounds.length-1?' — Final':''} · ${round.totalVotes} active vote${round.totalVotes!==1?'s':''}</div>
+        ${round.remaining.map(opt => {
+          const v = round.tally[opt];
+          const pct = round.totalVotes > 0 ? (v/round.totalVotes*100) : 0;
+          const isWinner = ri===rounds.length-1 && opt===winner;
+          const minV = Math.min(...round.remaining.map(o=>round.tally[o]));
+          const isLowest = !isWinner && v===minV && round.remaining.length>1;
+          return `
+            <div class="result-bar-row ${isLowest?'eliminated-row':''}">
+              <div class="result-bar-label">
+                <span>${escHtml(opt)}${isWinner?`<span class="winner-badge">✓ Winner</span>`:''}${isLowest?` <span style="font-size:11px;color:var(--ink-faint)">(eliminated)</span>`:''}</span>
+                <span class="pct">${v} (${Math.round(pct)}%)</span>
+              </div>
+              <div class="result-bar-track"><div class="result-bar-fill ${isWinner?'winner':''} ${isLowest?'eliminated':''}" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('')}
+      </div>`;
+    if (ri < rounds.length-1) html += `<hr class="divider">`;
+  });
+
+  html += `
+      <hr class="divider">
+      <div class="share-box" style="margin:0">
+        <h3>Share this poll</h3><p>Send this link to more voters — results update instantly.</p>
+        <div class="share-url-row">
+          <div class="share-url">${escHtml(shareUrl)}</div>
+          <button class="btn btn-accent" onclick="copyToClipboard('${escHtml(shareUrl)}',this)">Copy</button>
+        </div>
+      </div>
+    </div>`;
+  container.innerHTML = html;
+}
+
+// ─── Deep link ────────────────────────────────────────────────
+async function handleHash() {
+  const hash = location.hash;
+  if (!hash.startsWith('#vote:')) return;
+  const id = hash.slice(6);
+  if (!db) {
+    // Wait for user to configure Firebase, then retry
+    setTimeout(handleHash, 2000);
+    return;
+  }
+  try {
+    const doc = await db.collection('polls').doc(id).get();
+    if (!doc.exists) return;
+    const poll = { id, ...doc.data() };
+    openPollTabs(id, poll);
+    showTab('vote');
+  } catch(e) { console.error(e); }
+}
+
+// ─── Utils ────────────────────────────────────────────────────
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1800);
+  });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>
