@@ -404,21 +404,33 @@ async function createPoll() {
   btn.disabled = true;
   btn.innerHTML = `<span class="spinner"></span> Creating…`;
 
+  // Timeout after 10s so the button never stays stuck
+  const timeout = setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg> Create &amp; share poll`;
+    errEl.innerHTML = `Timed out — Firestore rules may be blocking writes. <strong>Fix:</strong> Go to Firebase Console → Firestore Database → Rules → paste this and publish:<br><br><code style="font-size:11px;background:#f3f3f3;padding:6px 8px;border-radius:4px;display:block;margin-top:6px">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code>`;
+  }, 10000);
+
   try {
     const docRef = await db.collection('polls').add({
       name, options,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       voteCount: 0
     });
+    clearTimeout(timeout);
     const id = docRef.id;
-    // Track locally as "my poll"
     const myPolls = JSON.parse(localStorage.getItem('my_polls') || '[]');
     myPolls.unshift({ id, name, options, createdAt: Date.now() });
     localStorage.setItem('my_polls', JSON.stringify(myPolls));
     showShareBox(id, name);
     openPollTabs(id, { id, name, options });
   } catch(e) {
-    errEl.textContent = 'Error creating poll: ' + e.message;
+    clearTimeout(timeout);
+    if (e.code === 'permission-denied' || e.message.includes('permission')) {
+      errEl.innerHTML = `Permission denied — Firestore rules are blocking writes. <strong>Fix:</strong> Go to Firebase Console → Firestore Database → Rules → paste this and publish:<br><br><code style="font-size:11px;background:#f3f3f3;padding:6px 8px;border-radius:4px;display:block;margin-top:6px">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code>`;
+    } else {
+      errEl.textContent = 'Error: ' + e.message;
+    }
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg> Create &amp; share poll`;
