@@ -334,9 +334,19 @@ function checkFirebaseReady() {
   return true;
 }
 
+const HARDCODED_CFG = {
+     apiKey: "AIzaSyAAcKSGdwWQfNr4ZRQjXdntwJp37E0W5Ns",
+     authDomain: "my-polls-922c3.firebaseapp.com",
+     projectId: "my-polls-922c3",
+     storageBucket: "my-polls-922c3.firebasestorage.app",
+     messagingSenderId: "791517451699",
+     appId: "1:791517451699:web:7f61203ad8b28c6d84a7c6"
+   };
+
+
 // ─── Boot ──────────────────────────────────────────────────────
 (function boot() {
-  const cfg = loadConfig();
+  const cfg = loadConfig() || HARDCODED_CFG;
   if (cfg && initFirebase(cfg)) {
     showConnectedState();
   } else {
