@@ -344,19 +344,6 @@ const HARDCODED_CFG = {
    };
 
 
-// ─── Boot ──────────────────────────────────────────────────────
-(function boot() {
-  const cfg = loadConfig() || HARDCODED_CFG;
-  if (cfg && initFirebase(cfg)) {
-    showConnectedState();
-  } else {
-    document.getElementById('setupBanner').classList.remove('hidden');
-  }
-  clearForm();
-  handleHash();
-  window.addEventListener('hashchange', handleHash);
-})();
-
 // ─── Tab management ───────────────────────────────────────────
 function showTab(name) {
   ['create','mypolls','vote','results'].forEach(t => {
@@ -743,6 +730,19 @@ function copyToClipboard(text, btn) {
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+// ─── Boot — all functions defined above, safe to run now ──────
+(function boot() {
+  const cfg = loadConfig() || HARDCODED_CFG;
+  if (cfg && initFirebase(cfg)) {
+    showConnectedState();
+  } else {
+    document.getElementById('setupBanner').classList.remove('hidden');
+  }
+  clearForm();
+  handleHash();
+  window.addEventListener('hashchange', handleHash);
+})();
 </script>
 </body>
 </html>
